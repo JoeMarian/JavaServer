@@ -19,7 +19,7 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne
+    @ManyToOne(cascade = {jakarta.persistence.CascadeType.PERSIST, jakarta.persistence.CascadeType.MERGE})
     @JoinColumn(name = "asset_id", nullable = false)
     private Asset asset;
     
@@ -29,7 +29,7 @@ public class Transaction {
     @Column(nullable = false)
     private Double quantity;
     
-    @Column(nullable = false)
+    @Column(name = "price_per_unit", nullable = false)
     private Double price;
     
     @Column(nullable = false)

@@ -48,14 +48,89 @@ public class TransactionController {
     }
     
     @PostMapping
-    public ResponseEntity<Transaction> createTransaction(@RequestBody Map<String, Object> request) {
-        Long assetId = Long.valueOf(request.get("assetId").toString());
-        String type = request.get("type").toString();
-        Double quantity = Double.valueOf(request.get("quantity").toString());
-        Double price = Double.valueOf(request.get("price").toString());
-        
-        Transaction transaction = transactionService.createTransaction(assetId, type, quantity, price);
-        return ResponseEntity.ok(transaction);
+    public ResponseEntity<?> createTransaction(@RequestBody Map<String, Object> request) {
+        try {
+            Long assetId = Long.valueOf(request.get("assetId").toString());
+            String type = request.get("type").toString();
+            Double quantity = Double.valueOf(request.get("quantity").toString());
+            Double price = Double.valueOf(request.get("price").toString());
+            
+            Transaction transaction = transactionService.createTransaction(assetId, type, quantity, price);
+            return ResponseEntity.ok(transaction);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/buy")
+    public ResponseEntity<?> buyStock(@RequestBody Map<String, Object> request) {
+        try {
+            System.out.println("\n========== BUY REQUEST RECEIVED ==========");
+            System.out.println("Full Request Body: " + request);
+            
+            // Validate required fields
+            if (!request.containsKey("symbol") || request.get("symbol") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required field: symbol"));
+            }
+            if (!request.containsKey("name") || request.get("name") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required field: name"));
+            }
+            if (!request.containsKey("quantity") || request.get("quantity") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required field: quantity"));
+            }
+            if (!request.containsKey("price") || request.get("price") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required field: price"));
+            }
+            
+            String symbol = request.get("symbol").toString();
+            String name = request.get("name").toString();
+            Double quantity = Double.valueOf(request.get("quantity").toString());
+            Double price = Double.valueOf(request.get("price").toString());
+            Double totalCost = quantity * price;
+            
+            System.out.println("Stock Details:");
+            System.out.println("  - Symbol: " + symbol);
+            System.out.println("  - Name: " + name);
+            System.out.println("  - Quantity: " + quantity);
+            System.out.println("  - Price Per Share: $" + price);
+            System.out.println("  - Total Cost: $" + totalCost);
+            System.out.println("=========================================\n");
+            
+            Transaction transaction = transactionService.buyStock(symbol, name, quantity, price);
+            System.out.println("✓ Buy Transaction Completed Successfully");
+            System.out.println("  - Transaction ID: " + transaction.getId());
+            System.out.println("=========================================\n");
+            return ResponseEntity.ok(transaction);
+        } catch (NumberFormatException e) {
+            System.err.println("Buy failed - Invalid number format: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid number format for quantity or price"));
+        } catch (RuntimeException e) {
+            System.err.println("Buy failed - RuntimeException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Buy failed - Exception: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/sell")
+    public ResponseEntity<?> sellStock(@RequestBody Map<String, Object> request) {
+        try {
+            String symbol = request.get("symbol").toString();
+            Double quantity = Double.valueOf(request.get("quantity").toString());
+            Double price = Double.valueOf(request.get("price").toString());
+            
+            Transaction transaction = transactionService.sellStock(symbol, quantity, price);
+            return ResponseEntity.ok(transaction);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
+        }
     }
     
     @DeleteMapping("/{id}")
