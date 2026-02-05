@@ -26,7 +26,10 @@ public class AssetController {
     
     @GetMapping
     public ResponseEntity<List<Asset>> getAllAssets() {
-        return ResponseEntity.ok(assetService.getAllAssets());
+        List<Asset> assets = assetService.getAllAssets().stream()
+        .filter(asset -> asset.getQuantity() != null && asset.getQuantity() > 0)
+        .toList();
+        return ResponseEntity.ok(assets);
     }
     
     @GetMapping("/{id}")
